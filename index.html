@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sincronizador de Sistemas Distribuídos</title>
+    <style>
+        /* Design limpo e moderno */
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --text-main: #1f2937;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --success-bg: #ecfdf5;
+            --success-text: #065f46;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            padding: 20px; 
+            display: flex; 
+            justify-content: center; 
+        }
+        
+        .app-container { max-width: 800px; width: 100%; }
+        h1 { text-align: center; font-size: 24px; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: var(--text-light); margin-bottom: 30px; font-size: 14px; }
+
+        .card { 
+            background-color: var(--card-bg); 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); 
+            padding: 24px; 
+            margin-bottom: 20px; 
+            border: 1px solid var(--border); 
+        }
+        
+        .card-header { 
+            font-size: 18px; 
+            font-weight: 600; 
+            margin-top: 0; 
+            margin-bottom: 20px; 
+            padding-bottom: 10px; 
+            border-bottom: 1px solid var(--border); 
+        }
+
+        .input-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 15px; 
+            margin-bottom: 15px; 
+            padding-bottom: 15px; 
+            border-bottom: 1px dashed var(--border); 
+        }
+        .input-grid:last-child { border-bottom: none; }
+        
+        .input-group { display: flex; flex-direction: column; gap: 5px; }
+        .input-group label { font-size: 13px; font-weight: 600; color: var(--text-light); }
+        
+        input[type="time"] { 
+            padding: 10px; 
+            border: 1px solid var(--border); 
+            border-radius: 8px; 
+            font-size: 15px; 
+            font-family: monospace; 
+            background-color: #f9fafb; 
+        }
+        input[type="time"]:focus { border-color: var(--primary); outline: none; background-color: #fff; }
+
+        .server-row { background-color: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px; }
+
+        .btn-action { 
+            width: 100%; 
+            background-color: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 16px; 
+            font-size: 16px; 
+            font-weight: 600; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            margin-top: 10px;
+        }
+        .btn-action:hover { background-color: var(--primary-hover); }
+        
+        .error-msg { 
+            color: #dc2626; 
+            background-color: #fef2f2; 
+            padding: 12px; 
+            border-radius: 6px; 
+            font-size: 14px; 
+            text-align: center; 
+            margin-top: 15px; 
+            display: none; 
+            font-weight: 500; 
+            border: 1px solid #fca5a5;
+        }
+
+        /* Resultados */
+        #painel-resultados { display: none; animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .result-box { background-color: var(--success-bg); border: 1px solid #a7f3d0; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+        .result-title { font-weight: 600; color: var(--success-text); margin-bottom: 10px; font-size: 15px; }
+        .result-item { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 4px; }
+        .result-value { font-weight: 600; font-family: monospace; font-size: 15px;}
+        
+        /* Modificações para o Pódio Duplo */
+        .podium-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
+        .podium-col { background: rgba(255,255,255,0.5); padding: 10px; border-radius: 8px; }
+        .podium-header { font-size: 13px; font-weight: 600; margin-bottom: 10px; text-align: center; }
+        
+        .podium-list { list-style: none; padding: 0; margin: 0; }
+        .podium-list li { padding: 8px 10px; margin-bottom: 8px; background: white; border-radius: 6px; border-left: 4px solid #94a3b8; font-size: 13px; display: flex; justify-content: space-between; }
+        
+        /* Destaque para a lista sincronizada */
+        .podium-sync li { border-left-color: var(--success-text); font-weight: 500; }
+
+        @media (max-width: 600px) {
+            .podium-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <h1>Simulador de Redes</h1>
+        <div class="subtitle">Algoritmo de Berkeley e Ordenação de Eventos</div>
+
+        <div class="card">
+            <div class="card-header">⚙️ 1. Configuração das Máquinas</div>
+            
+            <div class="server-row">
+                <div class="input-group" style="max-width: 200px;">
+                    <label>Hora Local do Servidor:</label>
+                    <input type="time" id="srv-local" value="10:00">
+                </div>
+            </div>
+
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>Cliente 1 - Hora Local (Relógio):</label>
+                    <input type="time" id="c1-local" value="10:00">
+                </div>
+                <div class="input-group">
+                    <label>Cliente 1 - Hora de Envio (Evento):</label>
+                    <input type="time" id="c1-envio" value="10:30">
+                </div>
+            </div>
+
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>Cliente 2 - Hora Local (Relógio):</label>
+                    <input type="time" id="c2-local" value="11:00">
+                </div>
+                <div class="input-group">
+                    <label>Cliente 2 - Hora de Envio (Evento):</label>
+                    <input type="time" id="c2-envio" value="10:40">
+                </div>
+            </div>
+
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>Cliente 3 - Hora Local (Relógio):</label>
+                    <input type="time" id="c3-local" value="10:15">
+                </div>
+                <div class="input-group">
+                    <label>Cliente 3 - Hora de Envio (Evento):</label>
+                    <input type="time" id="c3-envio" value="10:45">
+                </div>
+            </div>
+
+            <button class="btn-action" onclick="executarSistema()">Sincronizar e Ordenar</button>
+            <div id="msg-erro" class="error-msg">⚠️ Ops! Preencha todos os campos de horário antes de calcular.</div>
+        </div>
+
+        <div id="painel-resultados" class="card" style="border-top: 4px solid var(--success-text);">
+            <div class="card-header">✅ 2. Relatório do Servidor</div>
+            
+            <div class="result-box">
+                <div class="result-title">Ajuste de Relógios (Berkeley)</div>
+                <div class="result-item"><span>Clock Lógico (Hora Média):</span> <span class="result-value" id="res-media">--:--</span></div>
+                <div style="margin: 15px 0; border-top: 1px dashed #a7f3d0;"></div>
+                <div class="result-item"><span>Ajuste do Servidor:</span> <span class="result-value" id="adj-srv">--</span></div>
+                <div class="result-item"><span>Ajuste do Cliente 1:</span> <span class="result-value" id="adj-c1">--</span></div>
+                <div class="result-item"><span>Ajuste do Cliente 2:</span> <span class="result-value" id="adj-c2">--</span></div>
+                <div class="result-item"><span>Ajuste do Cliente 3:</span> <span class="result-value" id="adj-c3">--</span></div>
+            </div>
+
+            <div class="result-box" style="background-color: #eff6ff; border-color: #bfdbfe;">
+                <div class="result-title" style="color: #1e40af; text-align: center;">Ordem de Acesso ao Recurso (Fila)</div>
+                
+                <div class="podium-grid">
+                    
+                    <div class="podium-col">
+                        <div class="podium-header" style="color: #64748b;">❌ Sem Sincronização<br><span style="font-size: 11px; font-weight: normal;">(Hora aparente, sujeita a falhas)</span></div>
+                        <ul class="podium-list" id="lista-sem-sync">
+                            </ul>
+                    </div>
+
+                    <div class="podium-col" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2);">
+                        <div class="podium-header" style="color: var(--success-text);">✅ Com Sincronização<br><span style="font-size: 11px; font-weight: normal;">(Hora real, ajustada pelo Berkeley)</span></div>
+                        <ul class="podium-list podium-sync" id="lista-com-sync">
+                            </ul>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const inputs = document.querySelectorAll('input[type="time"]');
+        inputs.forEach(input => {
+            input.addEventListener('input', () => {
+                document.getElementById('painel-resultados').style.display = 'none';
+                document.getElementById('msg-erro').style.display = 'none';
+            });
+        });
+
+        function paraMinutos(horaString) {
+            let partes = horaString.split(":");
+            return parseInt(partes[0]) * 60 + parseInt(partes[1]);
+        }
+
+        function paraTexto(minutos) {
+            let h = Math.floor(minutos / 60);
+            let m = Math.round(minutos % 60);
+            if (h < 0) h += 24;
+            if (h >= 24) h -= 24;
+            return String(h).padStart(2, '0') + ":" + String(m).padStart(2, '0');
+        }
+
+        function formatarAjuste(dif) {
+            if (dif === 0) return "OK (0 min)";
+            return (dif > 0 ? "+" : "") + dif + " min";
+        }
+
+        function executarSistema() {
+            for (let input of inputs) {
+                if (!input.value) {
+                    document.getElementById('msg-erro').style.display = 'block';
+                    document.getElementById('painel-resultados').style.display = 'none';
+                    return; 
+                }
+            }
+            document.getElementById('msg-erro').style.display = 'none';
+
+            // 1. CÁLCULO DA MÉDIA
+            let srvLocal = paraMinutos(document.getElementById('srv-local').value);
+            let c1Local = paraMinutos(document.getElementById('c1-local').value);
+            let c2Local = paraMinutos(document.getElementById('c2-local').value);
+            let c3Local = paraMinutos(document.getElementById('c3-local').value);
+
+            let media = (srvLocal + c1Local + c2Local + c3Local) / 4;
+            document.getElementById('res-media').innerText = paraTexto(media);
+
+            // 2. CÁLCULO DOS AJUSTES (Offsets)
+            let adjSrv = Math.round(media - srvLocal);
+            let adjC1 = Math.round(media - c1Local);
+            let adjC2 = Math.round(media - c2Local);
+            let adjC3 = Math.round(media - c3Local);
+
+            document.getElementById('adj-srv').innerText = formatarAjuste(adjSrv);
+            document.getElementById('adj-c1').innerText = formatarAjuste(adjC1);
+            document.getElementById('adj-c2').innerText = formatarAjuste(adjC2);
+            document.getElementById('adj-c3').innerText = formatarAjuste(adjC3);
+
+            // 3. COLETA DOS TEMPOS DE ENVIO BRUTOS
+            let envioC1 = paraMinutos(document.getElementById('c1-envio').value);
+            let envioC2 = paraMinutos(document.getElementById('c2-envio').value);
+            let envioC3 = paraMinutos(document.getElementById('c3-envio').value);
+
+            // 4. FILA 1: SEM SINCRONIZAÇÃO (Usa a hora bruta que o cliente informou)
+            let filaSemSync = [
+                { nome: "Cliente 1", tempoOriginal: envioC1, exibicao: paraTexto(envioC1) },
+                { nome: "Cliente 2", tempoOriginal: envioC2, exibicao: paraTexto(envioC2) },
+                { nome: "Cliente 3", tempoOriginal: envioC3, exibicao: paraTexto(envioC3) }
+            ];
+            // Ordena pelo tempo bruto
+            filaSemSync.sort((a, b) => a.tempoOriginal - b.tempoOriginal);
+
+            // 5. FILA 2: COM SINCRONIZAÇÃO (Hora bruta + Ajuste do Berkeley)
+            let filaComSync = [
+                { nome: "Cliente 1", tempoCorrigido: envioC1 + adjC1, exibicao: paraTexto(envioC1 + adjC1) },
+                { nome: "Cliente 2", tempoCorrigido: envioC2 + adjC2, exibicao: paraTexto(envioC2 + adjC2) },
+                { nome: "Cliente 3", tempoCorrigido: envioC3 + adjC3, exibicao: paraTexto(envioC3 + adjC3) }
+            ];
+            // Ordena pelo tempo já corrigido
+            filaComSync.sort((a, b) => a.tempoCorrigido - b.tempoCorrigido);
+
+            // 6. RENDERIZAR NA TELA
+            const ulSemSync = document.getElementById('lista-sem-sync');
+            ulSemSync.innerHTML = ''; // limpa lista
+            filaSemSync.forEach((item, index) => {
+                ulSemSync.innerHTML += `<li><span>${index + 1}º ${item.nome}</span> <strong>${item.exibicao}</strong></li>`;
+            });
+
+            const ulComSync = document.getElementById('lista-com-sync');
+            ulComSync.innerHTML = ''; // limpa lista
+            filaComSync.forEach((item, index) => {
+                ulComSync.innerHTML += `<li><span>${index + 1}º ${item.nome}</span> <strong>${item.exibicao}</strong></li>`;
+            });
+
+            document.getElementById('painel-resultados').style.display = 'block';
+            document.getElementById('painel-resultados').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
